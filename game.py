@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 
-import pygame
-import math
 import os
 import sys
 import random
+
+import pygame
 from pygame.locals import *
 import artmanager
 
-## Util functions
 
+## Util functions
 def load_png(name):
     """ Load image and return image object"""
     fullname = os.path.join('data', 'images', name)
@@ -25,14 +25,13 @@ def load_png(name):
     return image, image.get_rect()
 
 def load_wav(name):
-    """ Load sound file and return object """    
+    """ Load sound file and return object """
     fullname = os.path.join('data', 'audio', name)
     return fullname
 
 
-
 ## Objects
-class enemy_obj(pygame.sprite.Sprite):
+class EnemyObj(pygame.sprite.Sprite):
 
     def __init__(self, x, y, height, speed_diff):
         pygame.sprite.Sprite.__init__(self)
@@ -69,7 +68,6 @@ class enemy_obj(pygame.sprite.Sprite):
 
 
     def draw(self, surface):
-        # surface.blit(self.image, (self.x, self.y))
         surface.blit(self.image, self.rect)
         if self.on_fire != -1:
             surface.blit(self.fire, self.rect)
@@ -97,7 +95,7 @@ class mixtape_obj(pygame.sprite.Sprite):
         surface.blit(self.image, self.rect)
 
 
-class player_obj(pygame.sprite.Sprite):
+class PlayerObj(pygame.sprite.Sprite):
 
     def __init__(self, x, y, level=1):
         pygame.sprite.Sprite.__init__(self)
@@ -128,7 +126,6 @@ class player_obj(pygame.sprite.Sprite):
         if _audio_enabled:
             fire_sounds = ['boom.wav', 'bop.wav', 'bada.wav', 'pow.wav']
             self.fire_sound = [pygame.mixer.Sound(load_wav(s)) for s in fire_sounds]
-            # self.fire_sound = pygame.mixer.Sound(load_wav('superhot.wav'))
             self.empty_sound = pygame.mixer.Sound(load_wav('EmptyClip.wav'))
             self.not_rapper_sound = pygame.mixer.Sound(load_wav('ImNotARapper.wav'))
 
@@ -182,7 +179,7 @@ class player_obj(pygame.sprite.Sprite):
             self.mixtapes_remaining -= 1
             if _audio_enabled:
                 #self.fire_sound.stop() #Stop previous sound if there was one
-                self.fire_sound[random.randrange(0,len(self.fire_sound))].play(loops=0, maxtime=0)
+                self.fire_sound[random.randrange(0, len(self.fire_sound))].play(loops=0, maxtime=0)
                 # self.fire_sound.play(loops=0, maxtime=0) # "supa hot"
         else:
             if _audio_enabled:
@@ -241,8 +238,7 @@ def main():
 
     # Initialise screen
     pygame.display.set_caption('StraightFire')
-    screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN, 0)
-    # screen = pygame.display.set_mode((0,0))
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN, 0)
     (_width, _height) = screen.get_size()
 
     # Fill background
@@ -252,7 +248,7 @@ def main():
     background = pygame.image.load('data/images/darktown.png').convert()
 
     # Initialize player
-    player = player_obj(0, _height, 1)
+    player = PlayerObj(0, _height, 1)
     player_info = player.get_rect()
     _player_width, _player_height = player_info[2], player_info[3]
     # return
@@ -267,7 +263,7 @@ def main():
     title_font2 = pygame.font.Font(None, 112)
 
     # Intro text
-    text = title_font.render("I'm not a rapper", 1, (250,250,250))
+    text = title_font.render("I'm not a rapper", 1, (250, 250, 250))
     textpos = text.get_rect()
     textpos.centerx = _width // 2
     textpos.centery = _height // 2
@@ -307,7 +303,7 @@ def main():
 
     pygame.joystick.init()
     joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-    if len(joysticks) > 0:
+    if joysticks:
         xbox = joysticks[0]
         xbox.init()
         enable_360=True
@@ -331,7 +327,7 @@ def main():
             taunt_state = xbox.get_button(1)
             if taunt_enabled and taunt_state:
                 player.taunt()
-                enemy = enemy_obj(_width, random.randrange(0,_height-_player_height,30),
+                enemy = EnemyObj(_width, random.randrange(0,_height-_player_height,30),
                         _height, random.randrange(-level, level))
                 haters.append(enemy)
                 taunt_enabled = False
@@ -356,7 +352,7 @@ def main():
                     return
                 if event.key == K_t:
                     player.taunt()
-                    enemy = enemy_obj(_width, random.randrange(0,_height-_player_height,30),
+                    enemy = EnemyObj(_width, random.randrange(0,_height-_player_height,30),
                         _height, random.randrange(-level, level))
                     haters.append(enemy)
                 if event.key == K_UP:
@@ -381,7 +377,7 @@ def main():
             elif event.type == USEREVENT+1:
                 wave_mult = (level // 3) + 1
                 for i in range(0, wave_mult):
-                    enemy = enemy_obj(_width, random.randrange(0,_height-_player_height,30),
+                    enemy = EnemyObj(_width, random.randrange(0, _height - _player_height, 30),
                         _height, random.randrange(-level, level))
                     haters.append(enemy)
 
@@ -415,7 +411,7 @@ def main():
                 enemy_timer -= int(enemy_timer * 0.15)
                 pygame.time.set_timer(USEREVENT+1, enemy_timer)
             # show levelup screen
-            text = title_font.render("Level {}".format(level),1,(250,250,250))
+            text = title_font.render("Level {}".format(level), 1, (250, 250, 250))
             textpos = text.get_rect()
             textpos.centerx = _width // 2
             textpos.centery = _height // 2 - 75
@@ -424,7 +420,7 @@ def main():
                 level_sound.play(loops=0, maxtime=0)
             pygame.display.flip()
             pygame.time.wait(1500)
-            text2 = title_font.render("Go!".format(level),1,(250,250,250))
+            text2 = title_font.render("Go!".format(level), 1, (250, 250, 250))
             textpos2 = text2.get_rect()
             textpos2.centerx = _width // 2
             textpos2.centery = _height // 2 + 75
@@ -440,15 +436,15 @@ def main():
 
         # HUD
         # mixtapes remaining
-        mixtapes_left = (250,250,250)
-        no_mixtapes = (250,0,0)
+        mixtapes_left = (250, 250, 250)
+        no_mixtapes = (250, 0, 0)
         mixtape_text = mixtape_font.render("Mixtapes: {}".format(player.mixtapes_remaining),
-            1, mixtapes_left if player.mixtapes_remaining > 0 else no_mixtapes)
+                1, mixtapes_left if player.mixtapes_remaining > 0 else no_mixtapes)
         mixtape_pos = mixtape_text.get_rect()
         mixtape_pos.x = 15
         mixtape_pos.y = 15
         screen.blit(mixtape_text, mixtape_pos)
-            
+
         text = font.render("Level: {}   Haters: {}   Hits: {}"
                 .format(level, enemy_count, hit_count), 1, mixtapes_left)
         textpos = text.get_rect()
@@ -462,11 +458,11 @@ def main():
             h.draw(screen)
         pygame.display.flip()
 
-    text = title_font.render("Your mixtape flopped!", 1, (255,20,0))
+    text = title_font.render("Your mixtape flopped!", 1, (255, 20, 0))
     textpos = text.get_rect()
     textpos.centerx = _width // 2
     textpos.centery = _height // 2 - 75
-    text2 = title_font2.render("Hater Count: {}".format(enemy_count), 1, (255,20,0))
+    text2 = title_font2.render("Hater Count: {}".format(enemy_count), 1, (255, 20, 0))
     textpos2 = text2.get_rect()
     textpos2.centerx = _width // 2
     textpos2.centery = _height // 2 + 75
