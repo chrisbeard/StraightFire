@@ -56,11 +56,11 @@ class EnemyObj(pygame.sprite.Sprite):
         self.rect.top = y
         self.on_fire = -1
         self.move_dist = int(height * 0.014) + speed_diff
-        if self.move_dist is 0:
+        if self.move_dist == 0:
             self.move_dist = int(height * 0.014)
 
     def move(self):
-        if self.on_fire is -1:
+        if self.on_fire == -1:
             self.x -= self.move_dist
             self.rect.x -= self.move_dist
         else:
@@ -192,7 +192,7 @@ class PlayerObj(pygame.sprite.Sprite):
 
     def check_hits(self, enemies):
         hit_count = 0
-        alive_enemies = [e for e in enemies if e.on_fire is -1]
+        alive_enemies = [e for e in enemies if e.on_fire == -1]
         for tape in self.mixtapes:
             for e in alive_enemies:
                 if pygame.sprite.collide_mask(tape, e):
@@ -203,7 +203,7 @@ class PlayerObj(pygame.sprite.Sprite):
         return hit_count
 
     def check_collisions(self, enemies):
-        alive_enemies = [e for e in enemies if e.on_fire is -1]
+        alive_enemies = [e for e in enemies if e.on_fire == -1]
         return pygame.sprite.spritecollideany(self, alive_enemies, pygame.sprite.collide_mask)
 
 
