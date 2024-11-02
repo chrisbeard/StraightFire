@@ -195,7 +195,8 @@ class PlayerObj(pygame.sprite.Sprite):
         alive_enemies = [e for e in enemies if e.on_fire == -1]
         for tape in self.mixtapes:
             for e in alive_enemies:
-                if pygame.sprite.collide_mask(tape, e):
+                if tape.rect.colliderect(e):
+                #if pygame.sprite.collide_mask(tape, e):
                     e.on_fire = 25
                     tape.consumed = True
                     hit_count += 1
@@ -212,7 +213,7 @@ def main():
     global _audio_enabled
 
     # Prompt user for art
-    # artmanager.get_user_art()
+    # mixtape_filename = artmanager.get_user_art()
 
     # misc data
     _audio_enabled = False if '--disable-audio' in sys.argv else True
@@ -254,7 +255,7 @@ def main():
     # return
 
     # Initialize sprites
-    playersprite = pygame.sprite.RenderPlain((player))
+    #playersprite = pygame.sprite.RenderPlain((player))
 
     # Initialize text
     font = pygame.font.Font(None, 32)
@@ -312,6 +313,7 @@ def main():
     # Event loop
     while 1:
         clock.tick(60) #cap at 60fps
+        #print(clock.get_fps())
 
         # read controller input
         if enable_360:
@@ -399,6 +401,7 @@ def main():
         hit_count += player.check_hits(haters)
 
         if player.check_collisions(haters):
+            print('Score: {}'.format(enemy_count))
             break
 
         # scale difficulty
