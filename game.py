@@ -237,16 +237,20 @@ def main():
         lose_sound = pygame.mixer.Sound(load_wav('stop.wav'))
         level_sound = pygame.mixer.Sound(load_wav('superhot.wav'))
 
+    # Initialize clock
+    clock = pygame.time.Clock()
+
     # Initialise screen
     pygame.display.set_caption('StraightFire')
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN, 0)
+    # screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode((1280, 680))
     (_width, _height) = screen.get_size()
 
     # Fill background
     background = pygame.Surface(screen.get_size())
-    background = background.convert()
-    # background.fill((250, 250, 250))
-    background = pygame.image.load('data/images/darktown.png').convert()
+    background.fill((250, 250, 250))
+    background = pygame.image.load('data/images/darktown.png')
+    screen.blit(background, (0, 0))
 
     # Initialize player
     player = PlayerObj(0, _height, 1)
@@ -269,16 +273,11 @@ def main():
     textpos.centerx = _width // 2
     textpos.centery = _height // 2
     screen.blit(text, textpos)
-    pygame.display.flip()
+    pygame.display.update()
     pygame.time.wait(3000)
 
     # Blit everything to the screen
     screen.blit(background, (-500, -500))
-    #screen.blit(bg, (0, 0))
-    pygame.display.flip()
-
-    # Initialize clock
-    clock = pygame.time.Clock()
 
     # movement vars
     enemy_timer = 1200
@@ -434,8 +433,7 @@ def main():
 
 
         # prepare screen to be re-drawn
-        screen.blit(background, (-500, -500))
-        # screen.blit(background, (0,0))
+        screen.blit(background, (0,0))
 
         # HUD
         # mixtapes remaining
