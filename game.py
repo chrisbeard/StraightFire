@@ -217,6 +217,7 @@ def main():
 
     # misc data
     _audio_enabled = False if '--disable-audio' in sys.argv else True
+    _show_fps = '--show-fps' in sys.argv
 
     # pre_init Pygame audio mixer
     if _audio_enabled:
@@ -275,9 +276,6 @@ def main():
     screen.blit(text, textpos)
     pygame.display.update()
     pygame.time.wait(3000)
-
-    # Blit everything to the screen
-    screen.blit(background, (-500, -500))
 
     # movement vars
     enemy_timer = 1200
@@ -446,8 +444,13 @@ def main():
         mixtape_pos.y = 15
         screen.blit(mixtape_text, mixtape_pos)
 
-        text = font.render("Level: {}   Haters: {}   Hits: {}"
-                .format(level, enemy_count, hit_count), 1, mixtapes_left)
+        if _show_fps:
+            stats = "Level: {}   Haters: {}   Hits: {}   FPS: {:.0f}".format(
+                level, enemy_count, hit_count, clock.get_fps())
+        else:
+            stats = "Level: {}   Haters: {}   Hits: {}".format(
+                level, enemy_count, hit_count)
+        text = font.render(stats, 1, mixtapes_left)
         textpos = text.get_rect()
         textpos.centerx = background.get_rect().centerx - 500
         textpos.centery = 15
