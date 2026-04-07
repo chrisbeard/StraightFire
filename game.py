@@ -55,12 +55,15 @@ class EnemyObj(pygame.sprite.Sprite):
         self.rect.left = x
         self.rect.top = y
         self.on_fire = -1
+        self.frozen = 0
         self.move_dist = int(height * 0.014) + speed_diff
         if self.move_dist == 0:
             self.move_dist = int(height * 0.014)
 
     def move(self):
-        if self.on_fire == -1:
+        if self.frozen > 0:
+            self.frozen -= 1
+        elif self.on_fire == -1:
             self.x -= self.move_dist
             self.rect.x -= self.move_dist
         else:
@@ -122,6 +125,21 @@ class PlayerObj(pygame.sprite.Sprite):
         self.mixtapes = []
         self.mixtapes_remaining = 4 + (self.level * 3)
 
+        # popularity meter
+        self.popularity = 0
+        self.popularity_max = 5
+        self.ability_ready = False
+        self.ability_type = None
+        self.ability_active = False
+        self.ability_timer = 0
+        self.shielded = False
+        self.unlimited_mixtapes = False
+        self.ability_durations = {
+            'shield': 180,      # 3 seconds
+            'unlimited': 300,  # 5 seconds
+            'beatdrop': 180    # 3 seconds
+        }
+
         #init sound effect
         if _audio_enabled:
             fire_sounds = ['boom.wav', 'bop.wav', 'bada.wav', 'pow.wav']
@@ -173,10 +191,11 @@ class PlayerObj(pygame.sprite.Sprite):
             tape.draw(surface)
 
     def fire(self):
-        if self.mixtapes_remaining > 0:
+        if self.mixtapes_remaining > 0 or self.unlimited_mixtapes:
             b = mixtape_obj(self.x + self.width, self.y + self.height // 3, self.max_y)
             self.mixtapes.append(b)
-            self.mixtapes_remaining -= 1
+            if not self.unlimited_mixtapes:
+                self.mixtapes_remaining -= 1
             if _audio_enabled:
                 #self.fire_sound.stop() #Stop previous sound if there was one
                 self.fire_sound[random.randrange(0, len(self.fire_sound))].play(loops=0, maxtime=0)
@@ -190,6 +209,21 @@ class PlayerObj(pygame.sprite.Sprite):
         if _audio_enabled:
             self.not_rapper_sound.play(loops=0, maxtime=0) # "supa hot"
 
+    def activate_ability(self, enemies):
+        if self.ability_ready:
+            self.ability_ready = False
+            self.ability_active = True
+            duration = self.ability_durations.get(self.ability_type, 300)
+            self.ability_timer = duration
+
+            if self.ability_type == 'shield':
+                self.shielded = True
+            elif self.ability_type == 'unlimited':
+                self.unlimited_mixtapes = True
+            elif self.ability_type == 'beatdrop':
+                for e in enemies:
+                    e.frozen = duration
+
     def check_hits(self, enemies):
         hit_count = 0
         alive_enemies = [e for e in enemies if e.on_fire == -1]
@@ -201,11 +235,27 @@ class PlayerObj(pygame.sprite.Sprite):
                     tape.consumed = True
                     hit_count += 1
         self.mixtapes = [m for m in self.mixtapes if not m.consumed]
+        if not self.ability_ready and not self.ability_active:
+            self.popularity = min(self.popularity_max, self.popularity + hit_count)
+            if self.popularity >= self.popularity_max:
+                self.ability_ready = True
+                ability_options = ['shield', 'unlimited', 'beatdrop']
+                self.ability_type = random.choice(ability_options)
         return hit_count
 
     def check_collisions(self, enemies):
         alive_enemies = [e for e in enemies if e.on_fire == -1]
-        return pygame.sprite.spritecollideany(self, alive_enemies, pygame.sprite.collide_mask)
+        if pygame.sprite.spritecollideany(self, alive_enemies, pygame.sprite.collide_mask):
+            if self.shielded:
+                self.shielded = False
+                self.ability_active = False
+                self.popularity = 0
+                for e in alive_enemies:
+                    if self.rect.colliderect(e.rect):
+                        e.on_fire = 1  # destroy the enemy that hit shield
+                return False
+            return True
+        return False
 
 
 ## Running the game
@@ -296,6 +346,7 @@ def main():
     enable_360 = False
     fire_enabled = True
     taunt_enabled = True
+    ability_enabled = True
 
     pygame.joystick.init()
     joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
@@ -331,6 +382,14 @@ def main():
             elif not taunt_state:
                 taunt_enabled = True
 
+            # X: use ability
+            ability_state = xbox.get_button(2)
+            if ability_enabled and ability_state:
+                player.activate_ability(haters)
+                ability_enabled = False
+            elif not ability_state:
+                ability_enabled = True
+
             # joystick movement
             joystick_threshhold = 0.15
             side_move   = xbox.get_axis(0)
@@ -362,6 +421,8 @@ def main():
                     moveleft, leftkey = True, True
                 if event.key == K_SPACE:
                     player.fire()
+                if event.key == K_f:
+                    player.activate_ability(haters)
             elif event.type == KEYUP:
                 if event.key == K_UP:
                     moveup, upkey = False, False
@@ -394,6 +455,14 @@ def main():
             h.move()
 
         hit_count += player.check_hits(haters)
+
+        if player.ability_active:
+            player.ability_timer -= 1
+            if player.ability_timer <= 0:
+                player.ability_active = False
+                player.shielded = False
+                player.unlimited_mixtapes = False
+                player.popularity = 0
 
         if player.check_collisions(haters):
             print('Score: {}'.format(enemy_count))
@@ -441,6 +510,26 @@ def main():
         mixtape_pos.x = 15
         mixtape_pos.y = 15
         screen.blit(mixtape_text, mixtape_pos)
+
+        # popularity meter
+        pop_bar_width = 200
+        pop_bar_height = 15
+        pop_bar_x = 15
+        pop_bar_y = 55
+        pop_fill = int((player.popularity / player.popularity_max) * pop_bar_width)
+        pop_color = (255, 200, 0) if player.ability_ready else (150, 150, 150)
+        pygame.draw.rect(screen, (50, 50, 50), (pop_bar_x, pop_bar_y, pop_bar_width, pop_bar_height))
+        pygame.draw.rect(screen, pop_color, (pop_bar_x, pop_bar_y, pop_fill, pop_bar_height))
+        if player.ability_ready:
+            ability_names = {'shield': 'SHIELD', 'unlimited': 'INFINITE MIXTAPES', 'beatdrop': 'BEAT DROP'}
+            pop_label = font.render("{} READY [F]".format(ability_names.get(player.ability_type, 'ABILITY')), 1, (255, 255, 0))
+        elif player.ability_active:
+            ability_names = {'shield': 'SHIELD', 'unlimited': 'INFINITE MIXTAPES', 'beatdrop': 'BEAT DROP'}
+            pop_label = font.render("{} ({:.1f}s)".format(
+                ability_names.get(player.ability_type, ''), player.ability_timer / 60), 1, (0, 255, 255))
+        else:
+            pop_label = font.render("Popularity", 1, (200, 200, 200))
+        screen.blit(pop_label, (pop_bar_x + pop_bar_width + 10, pop_bar_y - 2))
 
         if _show_fps:
             stats = "Level: {}   Haters: {}   Hits: {}   FPS: {:.0f}".format(
