@@ -248,9 +248,7 @@ def main():
     (_width, _height) = screen.get_size()
 
     # Fill background
-    background = pygame.Surface(screen.get_size())
-    background.fill((250, 250, 250))
-    background = pygame.image.load('data/images/darktown.png')
+    background = pygame.image.load('data/images/darktown.png').convert()
     screen.blit(background, (0, 0))
 
     # Initialize player
@@ -431,7 +429,7 @@ def main():
 
 
         # prepare screen to be re-drawn
-        screen.blit(background, (0,0))
+        screen.blit(background, (0, 0))
 
         # HUD
         # mixtapes remaining
